@@ -1,0 +1,87 @@
+// Bước 4: DAX measures cho dashboard Olist — Giao hàng → Review
+// Tạo 1 bảng rỗng tên _Measures (Home > Enter data > OK) rồi New measure từng cái bên dưới.
+// Bảng fact: fact_delivery (1 dòng / order trong phạm vi phân tích)
+
+// ===== KPI tổng quan =====
+Orders = COUNTROWS ( fact_delivery )
+
+Revenue = SUM ( fact_delivery[payment_value] )
+
+Late Orders = CALCULATE ( [Orders], fact_delivery[is_late] = 1 )
+
+Late Rate = DIVIDE ( [Late Orders], [Orders] )
+
+Avg Review = AVERAGE ( fact_delivery[review_score] )
+
+Bad Reviews = CALCULATE ( [Orders], fact_delivery[bad_review] = 1 )
+
+Bad Review Rate = DIVIDE ( [Bad Reviews], [Orders] )
+
+Avg Delivery Days = AVERAGE ( fact_delivery[delivery_days] )
+
+Avg Estimated Days = AVERAGE ( fact_delivery[estimated_days] )
+
+// Số ngày trễ trung bình, chỉ tính trên đơn trễ
+Avg Days Late = CALCULATE ( AVERAGE ( fact_delivery[delay_days] ), fact_delivery[is_late] = 1 )
+
+// ===== So sánh trễ vs đúng hạn =====
+Avg Review Late = CALCULATE ( [Avg Review], fact_delivery[is_late] = 1 )
+
+Avg Review On Time = CALCULATE ( [Avg Review], fact_delivery[is_late] = 0 )
+
+Bad Review Rate Late = CALCULATE ( [Bad Review Rate], fact_delivery[is_late] = 1 )
+
+Bad Review Rate On Time = CALCULATE ( [Bad Review Rate], fact_delivery[is_late] = 0 )
+
+// Đơn trễ có tỉ lệ review xấu gấp bao nhiêu lần đơn đúng hạn
+Bad Review Multiplier = DIVIDE ( [Bad Review Rate Late], [Bad Review Rate On Time] )
+
+// Tỉ lệ trễ trung bình toàn kỳ (đường tham chiếu, bỏ qua filter tháng/bang)
+Late Rate Overall =
+CALCULATE ( [Late Rate], REMOVEFILTERS ( dim_date ), REMOVEFILTERS ( dim_state ) )
+
+// ===== What-if =====
+// Cần tạo 2 What-if parameter (Modeling > New parameter > Numeric range):
+//   'Reduce Days'  : 0 -> 15, step 1, default 3   -> tạo [Reduce Days Value]
+//   'Late Days'    : 0 -> 30, step 1, default 5   -> tạo [Late Days Value]
+
+WI Bad Reviews Avoided =
+LOOKUPVALUE (
+    what_if_reduction[bad_reviews_avoided],
+    what_if_reduction[reduce_days], [Reduce Days Value]
+)
+
+WI Late Orders Bad Rate =
+LOOKUPVALUE (
+    what_if_reduction[late_orders_pred_bad_rate],
+    what_if_reduction[reduce_days], [Reduce Days Value]
+)
+
+WI System Bad Rate =
+LOOKUPVALUE (
+    what_if_reduction[system_pred_bad_rate],
+    what_if_reduction[reduce_days], [Reduce Days Value]
+)
+
+WI System Bad Rate Baseline =
+LOOKUPVALUE (
+    what_if_reduction[system_pred_bad_rate],
+    what_if_reduction[reduce_days], 0
+)
+
+WI Prob Bad Review =
+LOOKUPVALUE (
+    what_if_delay_curve[prob_bad_review],
+    what_if_delay_curve[late_days], [Late Days Value]
+)
+
+// ===== Text động cho tiêu đề / card insight =====
+Insight Late vs On Time =
+"Đơn trễ: " & FORMAT ( [Avg Review Late], "0.00" ) & "★ vs đúng hạn: "
+    & FORMAT ( [Avg Review On Time], "0.00" ) & "★ — tỉ lệ review xấu gấp "
+    & FORMAT ( [Bad Review Multiplier], "0.0" ) & " lần"
+
+WI Insight =
+"Giảm trễ " & [Reduce Days Value] & " ngày cho mọi đơn trễ → tránh ~"
+    & FORMAT ( [WI Bad Reviews Avoided], "#,0" ) & " review xấu; tỉ lệ review xấu toàn hệ thống "
+    & FORMAT ( [WI System Bad Rate Baseline], "0.0%" ) & " → " & FORMAT ( [WI System Bad Rate], "0.0%" )

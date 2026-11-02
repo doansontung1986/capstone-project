@@ -1,0 +1,16 @@
+﻿measure,expected_value
+Orders,95560.0
+Revenue (BRL),15246885.8008
+Late Rate,0.0667
+Avg Review,4.1563
+Bad Review Rate,0.128
+Avg Delivery Days,12.4978
+Avg Review - Late,2.2706
+Avg Review - On time,4.2912
+Bad Review Rate - Late,0.6242
+Bad Review Rate - On time,0.0925
+Late Rate 2017-11,0.1226
+Late Rate 2018-03,0.1865
+Late Rate AL,0.2087
+Late Rate SP,0.0444
+Bad Review Rate Multi-seller,0.4714

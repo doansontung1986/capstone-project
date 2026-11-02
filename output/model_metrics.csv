@@ -1,0 +1,5 @@
+model,threshold,ROC-AUC,PR-AUC,Accuracy,Precision,Recall,F1
+Baseline: luôn đoán 0,0.5,0.5,0.128,0.872,0.0,0.0,0.0
+Logistic (ngưỡng 0.5),0.5,0.753,0.448,0.889,0.728,0.217,0.334
+Logistic (ngưỡng tối ưu),0.217,0.753,0.448,0.881,0.548,0.412,0.47
+Decision Tree (ngưỡng tối ưu),0.241,0.736,0.442,0.869,0.487,0.455,0.471
